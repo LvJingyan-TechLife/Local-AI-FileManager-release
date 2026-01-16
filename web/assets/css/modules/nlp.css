@@ -1,0 +1,79 @@
+/* NLP工具面板样式 */
+.nlp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.nlp-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.nlp-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.nlp-card-header .nlp-icon {
+    font-size: 24px;
+}
+
+.nlp-card-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.nlp-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    resize: vertical;
+    min-height: 120px;
+    margin-bottom: 16px;
+    transition: border-color var(--transition-fast);
+}
+
+.nlp-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.segment-options {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.segment-options label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.nlp-result {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    min-height: 100px;
+}
+
+.result-placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+    margin: 0;
+}

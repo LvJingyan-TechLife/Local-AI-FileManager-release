@@ -1,0 +1,11 @@
+/* 隐藏语义搜索功能 */
+.nav-item[data-tab="search"] {
+    display: none !important;
+}
+
+#search-panel {
+    display: none !important;
+}
+
+/* 隐藏功能入口 - 需要根据实际情况调整选择器 */
+/* 目前尚未找到明确的功能入口元素，如需隐藏特定元素，请提供更具体的选择器 */
