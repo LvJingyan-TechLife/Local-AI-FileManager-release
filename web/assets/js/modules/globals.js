@@ -384,14 +384,6 @@ const AppInit = {
         if (savedSettings) {
             console.log('[INIT] 恢复保存的设置:', savedSettings);
             
-            // 自动更新旧的默认值
-            if (savedSettings.retrieveCount === '5') {
-                console.log('[INIT] 检测到旧的默认值5，自动更新为all');
-                savedSettings.retrieveCount = 'all';
-                // 保存更新后的设置
-                AppStorage.set('settings', savedSettings);
-            }
-            
             StateManager.updateState('modelSettings', savedSettings);
         }
     }

@@ -106,11 +106,10 @@
                 };
             }
             
-            if (!this.contentClickHandler) {
-                this.contentClickHandler = () => {
-                    console.log('[DOCGEN] 生成内容按钮点击', new Date().toISOString());
-                    console.trace('[DOCGEN] 点击事件处理栈');
-                    this.generateContent();
+            if (!this.exportClickHandler) {
+                this.exportClickHandler = () => {
+                    console.log('[DOCGEN] 导出文档按钮点击', new Date().toISOString());
+                    this.exportDocument();
                 };
             }
             
@@ -154,6 +153,22 @@
                     console.log('[DOCGEN] 成功绑定主面板的生成内容按钮事件');
                 } else {
                     console.warn('[DOCGEN] 在主面板中未找到生成内容按钮');
+                }
+                
+                // 在主面板内查找导出文档按钮
+                const exportDocBtn = mainPanel.querySelector('.panel-container #component-exportDocBtn');
+                if (exportDocBtn) {
+                    // 先移除可能存在的事件监听器
+                    exportDocBtn.removeEventListener('click', this.exportClickHandler);
+                    // 添加事件监听器
+                    exportDocBtn.addEventListener('click', this.exportClickHandler, { 
+                        capture: false, 
+                        once: false,
+                        passive: true
+                    });
+                    console.log('[DOCGEN] 成功绑定主面板的导出文档按钮事件');
+                } else {
+                    console.warn('[DOCGEN] 在主面板中未找到导出文档按钮');
                 }
                 
                 // 在主面板内查找搜索按钮
@@ -438,6 +453,13 @@
                 return;
             }
 
+            // 禁用导出按钮
+            const exportDocBtn = document.querySelector('#docgen-panel > .panel-container #component-exportDocBtn');
+            if (exportDocBtn) {
+                exportDocBtn.disabled = true;
+                console.log('[DOCGEN] 导出按钮已禁用');
+            }
+
             try {
                 this.toast.show(`正在生成${chapterCount}个章节的内容...`, 'info');
 
@@ -503,6 +525,13 @@
                 });
 
                 this.toast.show('内容生成成功', 'success');
+                
+                // 启用导出按钮
+                const exportDocBtn = document.querySelector('#docgen-panel > .panel-container #component-exportDocBtn');
+                if (exportDocBtn) {
+                    exportDocBtn.disabled = false;
+                    console.log('[DOCGEN] 导出按钮已启用');
+                }
             } catch (error) {
                 console.error('[DOCGEN] 内容生成失败:', error);
                 this.toast.show('内容生成失败，请稍后重试', 'error');
@@ -688,6 +717,307 @@
                     `;
                 }
             }
+        }
+
+        // 导出文档功能
+        async exportDocument() {
+            // 获取文档主题和内容
+            const topic = document.querySelector('#docgen-panel > .panel-container #component-genTopic').value;
+            const requirements = document.querySelector('#docgen-panel > .panel-container #component-genRequirements').value;
+            const docType = document.querySelector('#docgen-panel > .panel-container #component-genDocType').value;
+            
+            // 获取生成的内容
+            const resultContainer = document.getElementById('component-genResult');
+            if (!resultContainer) {
+                this.toast.show('未找到文档内容', 'error');
+                return;
+            }
+            
+            // 提取生成的内容
+            const contentElement = resultContainer.querySelector('.unified-chapters-content .response-content');
+            if (!contentElement || !contentElement.textContent.trim()) {
+                this.toast.show('文档内容为空，无法导出', 'warning');
+                return;
+            }
+            
+            const content = contentElement.textContent.trim();
+            
+            try {
+                this.toast.show('正在准备导出文档...', 'info');
+                
+                // 创建文档内容
+                let documentContent = '';
+                let fileName = '';
+                let mimeType = '';
+                
+                // 根据文档类型设置不同的格式
+                if (docType === 'word') {
+                    // 创建Word文档格式
+                    documentContent = this.createWordDocument(topic, requirements, content);
+                    fileName = `${topic}.docx`;
+                    mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                } else if (docType === 'ppt') {
+                    // 创建PPT文档格式
+                    documentContent = this.createPPTDocument(topic, requirements, content);
+                    fileName = `${topic}.pptx`;
+                    mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+                } else {
+                    // 默认创建HTML文档
+                    documentContent = this.createHTMLDocument(topic, requirements, content);
+                    fileName = `${topic}.html`;
+                    mimeType = 'text/html';
+                }
+                
+                // 创建Blob对象
+                const blob = new Blob([documentContent], { type: mimeType });
+                
+                // 创建下载链接
+                const downloadUrl = URL.createObjectURL(blob);
+                const downloadLink = document.createElement('a');
+                downloadLink.href = downloadUrl;
+                downloadLink.download = fileName;
+                
+                // 添加到DOM并触发点击
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                
+                // 清理
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(downloadUrl);
+                
+                this.toast.show(`文档 "${fileName}" 已成功下载`, 'success');
+            } catch (error) {
+                console.error('[DOCGEN] 导出文档失败:', error);
+                this.toast.show('导出文档失败，请稍后重试', 'error');
+            }
+        }
+        
+        // 创建Word文档内容
+        createWordDocument(topic, requirements, content) {
+            // 创建简单的Word文档格式
+            const wordTemplate = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                    <meta charset="utf-8">
+                    <title>${topic}</title>
+                    <!--[if gte mso 9]>
+                    <xml>
+                        <w:WordDocument>
+                            <w:View>Print</w:View>
+                            <w:Zoom>90</w:Zoom>
+                        </w:WordDocument>
+                    </xml>
+                    <![endif]-->
+                    <style>
+                        @page {
+                            margin: 2.5cm;
+                        }
+                        body {
+                            font-family: "Microsoft YaHei", Arial, sans-serif;
+                            font-size: 12pt;
+                            line-height: 1.5;
+                        }
+                        h1 {
+                            font-size: 18pt;
+                            font-weight: bold;
+                            margin-bottom: 20px;
+                            text-align: center;
+                        }
+                        h2 {
+                            font-size: 14pt;
+                            font-weight: bold;
+                            margin-top: 20px;
+                            margin-bottom: 10px;
+                        }
+                        p {
+                            margin-bottom: 10px;
+                        }
+                        .requirements {
+                            background-color: #f5f5f5;
+                            padding: 10px;
+                            border-left: 3px solid #007acc;
+                            margin-bottom: 20px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>${topic}</h1>
+                    <div class="requirements">
+                        <h3>文档要求</h3>
+                        <p>${requirements}</p>
+                    </div>
+                    <div class="content">
+                        ${content.replace(/\n/g, '</p><p>')}
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            return wordTemplate;
+        }
+        
+        // 创建PPT文档内容
+        createPPTDocument(topic, requirements, content) {
+            // 创建简单的HTML格式，用户可以在PowerPoint中导入
+            const pptTemplate = `
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>${topic} - PPT大纲</title>
+                    <style>
+                        body {
+                            font-family: "Microsoft YaHei", Arial, sans-serif;
+                            font-size: 12pt;
+                            line-height: 1.5;
+                            margin: 20px;
+                        }
+                        h1 {
+                            font-size: 18pt;
+                            font-weight: bold;
+                            margin-bottom: 20px;
+                            text-align: center;
+                            page-break-after: always;
+                        }
+                        h2 {
+                            font-size: 16pt;
+                            font-weight: bold;
+                            margin-top: 20px;
+                            margin-bottom: 10px;
+                            page-break-before: always;
+                        }
+                        h3 {
+                            font-size: 14pt;
+                            font-weight: bold;
+                            margin-top: 15px;
+                            margin-bottom: 8px;
+                        }
+                        p {
+                            margin-bottom: 10px;
+                        }
+                        .requirements {
+                            background-color: #f5f5f5;
+                            padding: 10px;
+                            border-left: 3px solid #007acc;
+                            margin-bottom: 20px;
+                        }
+                        .slide {
+                            min-height: 70vh;
+                            page-break-after: always;
+                            border: 1px dashed #ccc;
+                            padding: 20px;
+                            margin-bottom: 20px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="slide">
+                        <h1>${topic}</h1>
+                        <div class="requirements">
+                            <h3>文档要求</h3>
+                            <p>${requirements}</p>
+                        </div>
+                    </div>
+                    <div class="slide">
+                        <h2>内容概要</h2>
+                        <div class="content">
+                            ${content.replace(/\n/g, '</p><p>')}
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            return pptTemplate;
+        }
+        
+        // 创建HTML文档内容
+        createHTMLDocument(topic, requirements, content) {
+            // 创建HTML格式文档
+            const htmlTemplate = `
+                <!DOCTYPE html>
+                <html lang="zh-CN">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>${topic}</title>
+                    <style>
+                        body {
+                            font-family: "Microsoft YaHei", Arial, sans-serif;
+                            font-size: 14px;
+                            line-height: 1.6;
+                            color: #333;
+                            max-width: 800px;
+                            margin: 0 auto;
+                            padding: 20px;
+                        }
+                        h1 {
+                            font-size: 24px;
+                            font-weight: bold;
+                            margin-bottom: 20px;
+                            text-align: center;
+                            color: #2c3e50;
+                            border-bottom: 2px solid #3498db;
+                            padding-bottom: 10px;
+                        }
+                        h2 {
+                            font-size: 18px;
+                            font-weight: bold;
+                            margin-top: 30px;
+                            margin-bottom: 15px;
+                            color: #2980b9;
+                        }
+                        h3 {
+                            font-size: 16px;
+                            font-weight: bold;
+                            margin-top: 20px;
+                            margin-bottom: 10px;
+                            color: #34495e;
+                        }
+                        p {
+                            margin-bottom: 12px;
+                            text-align: justify;
+                        }
+                        .requirements {
+                            background-color: #f8f9fa;
+                            padding: 15px;
+                            border-left: 4px solid #3498db;
+                            margin-bottom: 25px;
+                            border-radius: 4px;
+                        }
+                        .requirements h3 {
+                            margin-top: 0;
+                            color: #2c3e50;
+                        }
+                        .content {
+                            margin-top: 20px;
+                        }
+                        .footer {
+                            margin-top: 40px;
+                            padding-top: 20px;
+                            border-top: 1px solid #eee;
+                            font-size: 12px;
+                            color: #7f8c8d;
+                            text-align: center;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>${topic}</h1>
+                    <div class="requirements">
+                        <h3>文档要求</h3>
+                        <p>${requirements}</p>
+                    </div>
+                    <div class="content">
+                        ${content.replace(/\n/g, '</p><p>')}
+                    </div>
+                    <div class="footer">
+                        <p>本文档由AI文档生成系统创建于 ${new Date().toLocaleString()}</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            return htmlTemplate;
         }
 
         // 构建大纲HTML（解析原始内容为树形结构，一行一个节点）

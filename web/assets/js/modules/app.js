@@ -1264,12 +1264,6 @@
                 if (settings) {
                     console.log('[SETTINGS] 找到保存的设置:', settings);
                     
-                    // 自动更新旧的默认值
-                    if (settings.retrieveCount === '5') {
-                        console.log('[SETTINGS] 检测到旧的默认值5，自动更新为all');
-                        settings.retrieveCount = 'all';
-                    }
-                    
                     // 恢复各种设置
                     const providerEl = document.getElementById('settingsModelProvider');
                     if (providerEl && settings.provider) {
@@ -1384,41 +1378,84 @@
                 });
             }
             
-            // 绑定其他设置变更事件
-            this.bindSettingsChangeEvents();
+            // 绑定检索片段数变更事件
+            const settingsRetrieveCount = document.getElementById('settingsRetrieveCount');
+            if (settingsRetrieveCount) {
+                // 保存当前选择值，避免在重新绑定事件时丢失
+                const currentRetrieveCountValue = settingsRetrieveCount.value;
+                
+                const newRetrieveCountSelect = settingsRetrieveCount.cloneNode(true);
+                settingsRetrieveCount.parentNode.replaceChild(newRetrieveCountSelect, settingsRetrieveCount);
+                
+                // 恢复保存的选择值
+                newRetrieveCountSelect.value = currentRetrieveCountValue;
+                
+                newRetrieveCountSelect.addEventListener('change', (e) => {
+                    console.log('[🔄函数进入] settingsRetrieveCount change事件触发');
+                    console.log('[🔄函数进入] 选择的新值:', e.target.value);
+                    this.saveSettings();
+                });
+            }
             
+            // 绑定流式输出变更事件
+            const settingsStreamOutput = document.getElementById('settingsStreamOutput');
+            if (settingsStreamOutput) {
+                // 保存当前选择值，避免在重新绑定事件时丢失
+                const currentStreamOutputValue = settingsStreamOutput.checked;
+                
+                const newStreamOutputCheckbox = settingsStreamOutput.cloneNode(true);
+                settingsStreamOutput.parentNode.replaceChild(newStreamOutputCheckbox, settingsStreamOutput);
+                
+                // 恢复保存的选择值
+                newStreamOutputCheckbox.checked = currentStreamOutputValue;
+                
+                newStreamOutputCheckbox.addEventListener('change', (e) => {
+                    console.log('[🔄函数进入] settingsStreamOutput change事件触发');
+                    console.log('[🔄函数进入] 新的值:', e.target.checked);
+                    this.saveSettings();
+                });
+            }
+            
+            // 绑定显示信息来源变更事件
+            const settingsIncludeContext = document.getElementById('settingsIncludeContext');
+            if (settingsIncludeContext) {
+                // 保存当前选择值，避免在重新绑定事件时丢失
+                const currentIncludeContextValue = settingsIncludeContext.checked;
+                
+                const newIncludeContextCheckbox = settingsIncludeContext.cloneNode(true);
+                settingsIncludeContext.parentNode.replaceChild(newIncludeContextCheckbox, settingsIncludeContext);
+                
+                // 恢复保存的选择值
+                newIncludeContextCheckbox.checked = currentIncludeContextValue;
+                
+                newIncludeContextCheckbox.addEventListener('change', (e) => {
+                    console.log('[🔄函数进入] settingsIncludeContext change事件触发');
+                    console.log('[🔄函数进入] 新的值:', e.target.checked);
+                    this.saveSettings();
+                });
+            }
+            
+            // 绑定搜索模式变更事件
+            const settingsSearchMode = document.getElementById('settingsSearchMode');
+            if (settingsSearchMode) {
+                // 保存当前选择值，避免在重新绑定事件时丢失
+                const currentSearchModeValue = settingsSearchMode.value;
+                
+                const newSearchModeSelect = settingsSearchMode.cloneNode(true);
+                settingsSearchMode.parentNode.replaceChild(newSearchModeSelect, settingsSearchMode);
+                
+                // 恢复保存的选择值
+                newSearchModeSelect.value = currentSearchModeValue;
+                
+                newSearchModeSelect.addEventListener('change', (e) => {
+                    console.log('[🔄函数进入] settingsSearchMode change事件触发');
+                    console.log('[🔄函数进入] 选择的新值:', e.target.value);
+                    this.saveSettings();
+                });
+            }
+            
+            // 不再需要调用 bindSettingsChangeEvents，因为所有事件都在这里绑定了
             console.log('[INIT] 模型设置恢复完成');
-        }
-
-        // 绑定其他设置变更事件
-        bindSettingsChangeEvents() {
-            console.log('[SETTINGS] 绑定其他设置变更事件');
-            
-            // 检索片段数
-            const retrieveCountEl = document.getElementById('settingsRetrieveCount');
-            if (retrieveCountEl) {
-                retrieveCountEl.addEventListener('change', () => this.saveSettings());
-            }
-            
-            // 流式输出
-            const streamOutputEl = document.getElementById('settingsStreamOutput');
-            if (streamOutputEl) {
-                streamOutputEl.addEventListener('change', () => this.saveSettings());
-            }
-            
-            // 显示信息来源
-            const includeContextEl = document.getElementById('settingsIncludeContext');
-            if (includeContextEl) {
-                includeContextEl.addEventListener('change', () => this.saveSettings());
-            }
-            
-            // 搜索模式
-            const searchModeEl = document.getElementById('settingsSearchMode');
-            if (searchModeEl) {
-                searchModeEl.addEventListener('change', () => this.saveSettings());
-            }
-            
-            console.log('[SETTINGS] 设置变更事件绑定完成');
         }
     }
 
