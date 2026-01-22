@@ -1,0 +1,35 @@
+<div class="panel-container">
+    <div class="search-container">
+        <div class="search-bar">
+            <div class="search-input-wrapper">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="M21 21l-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="searchInput" placeholder="输入搜索关键词...">
+            </div>
+            <select id="searchMode" class="category-select">
+                <option value="exact">精确搜索</option>
+                <option value="semantic">语义搜索</option>
+            </select>
+            <select id="categoryFilter" class="category-select">
+                <option value="">全部分类</option>
+            </select>
+            <button class="btn btn-primary" id="searchBtn">搜索</button>
+        </div>
+
+        <div class="search-results-wrapper">
+            <div class="search-results" id="searchResults">
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="M21 21l-4.35-4.35"></path>
+                    </svg>
+                    <p>输入关键词开始搜索</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="search-pagination" id="searchPagination"></div>
+    </div>
+</div>

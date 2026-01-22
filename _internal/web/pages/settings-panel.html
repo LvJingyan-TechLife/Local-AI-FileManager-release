@@ -1,0 +1,143 @@
+<!-- 系统设置面板 -->
+<section class="panel" id="settings-panel">
+    <div class="panel-container">
+        <div class="settings-grid">
+            <div class="settings-card">
+                <h3>🤖 AI模型配置</h3>
+                <p class="section-desc">配置智能对话使用的AI模型参数</p>
+                
+                <div class="config-form">
+                    <div class="form-group">
+                        <label for="settingsModelProvider">模型提供商</label>
+                        <select id="settingsModelProvider" class="config-input">
+                            <option value="ollama">Ollama (本地)</option>
+                            <option value="openai">OpenAI (云端)</option>
+                            <option value="lmstudio">LM Studio (本地)</option>
+                        </select>
+                        <span class="form-hint">选择AI模型的服务提供商</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="settingsModelName">模型名称</label>
+                        <div class="model-select-wrapper">
+                            <select id="settingsModelName" class="config-input">
+                                <option value="">加载中...</option>
+                            </select>
+                            <button class="config-btn" id="settingsRefreshModelsBtn" title="刷新模型">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <span class="form-hint">选择具体使用的AI模型</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="settingsRetrieveCount">检索片段数</label>
+                        <select id="settingsRetrieveCount" class="config-input">
+                            <option value="all" selected>全部</option>
+                            <option value="3">3 片段</option>
+                            <option value="5">5 片段</option>
+                            <option value="8">8 片段</option>
+                            <option value="10">10 片段</option>
+                        </select>
+                        <span class="form-hint">每次对话检索的相关文档片段数量</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>输出选项</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="settingsStreamOutput" checked>
+                                <span>启用流式输出</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="settingsIncludeContext" checked>
+                                <span>显示信息来源</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <h3>🔍 搜索设置</h3>
+                <p class="section-desc">配置智能对话的搜索模式</p>
+                
+                <div class="config-form">
+                    <div class="form-group">
+                        <label for="settingsSearchMode">搜索模式</label>
+                        <select id="settingsSearchMode" class="config-input">
+                            <option value="precise" selected>精确搜索</option>
+                        </select>
+                        <span class="form-hint">当前系统只支持精确搜索模式</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-card">
+                <h3>📋 可用模型</h3>
+                <div class="model-list" id="modelList">
+                    <div class="empty-hint">加载中...</div>
+                </div>
+            </div>
+            
+            <div class="settings-card">
+                <h3>服务状态</h3>
+                <div class="service-status" id="serviceStatus">
+                    <div class="status-item">
+                        <span class="status-label">RAG服务</span>
+                        <span class="status-badge checking">检查中...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">向量数据库</span>
+                        <span class="status-badge checking">检查中...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">AI模型</span>
+                        <span class="status-badge checking">检查中...</span>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" id="refreshStatus">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    刷新状态
+                </button>
+            </div>
+
+            <div class="settings-card">
+                <h3>扩展功能接口</h3>
+                <div class="extension-list">
+                    <div class="extension-item">
+                        <div class="extension-info">
+                            <span class="extension-name">📊 数据分析</span>
+                            <span class="extension-desc">文档统计和趋势分析</span>
+                        </div>
+                        <span class="extension-status disabled">待开发</span>
+                    </div>
+                    <div class="extension-item">
+                        <div class="extension-info">
+                            <span class="extension-name">📈 知识图谱</span>
+                            <span class="extension-desc">实体关系可视化</span>
+                        </div>
+                        <span class="extension-status disabled">待开发</span>
+                    </div>
+                    <div class="extension-item">
+                        <div class="extension-info">
+                            <span class="extension-name">🔗 API集成</span>
+                            <span class="extension-desc">第三方服务接口</span>
+                        </div>
+                        <span class="extension-status disabled">待开发</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <h3>关于系统</h3>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,41 @@
+<!-- NLP工具面板 -->
+<section class="panel" id="nlp-panel">
+    <div class="panel-container">
+        <div class="nlp-grid">
+            <div class="nlp-card">
+                <div class="nlp-card-header">
+                    <span class="nlp-icon">🌐</span>
+                    <h3>语言检测</h3>
+                </div>
+                <textarea id="detectInput" class="nlp-input" placeholder="输入要检测的文本..."></textarea>
+                <button class="btn btn-primary" id="detectBtn">检测语言</button>
+                <div class="nlp-result" id="detectResult">
+                    <p class="result-placeholder">结果将显示在这里</p>
+                </div>
+            </div>
+
+            <div class="nlp-card">
+                <div class="nlp-card-header">
+                    <span class="nlp-icon">✂️</span>
+                    <h3>文本分词</h3>
+                </div>
+                <textarea id="segmentInput" class="nlp-input" placeholder="输入要分词的文本..."></textarea>
+                <div class="segment-options">
+                    <label>
+                        <input type="radio" name="segmentLang" value="" checked> 自动
+                    </label>
+                    <label>
+                        <input type="radio" name="segmentLang" value="zh"> 中文
+                    </label>
+                    <label>
+                        <input type="radio" name="segmentLang" value="en"> 英文
+                    </label>
+                </div>
+                <button class="btn btn-primary" id="segmentBtn">分词</button>
+                <div class="nlp-result" id="segmentResult">
+                    <p class="result-placeholder">分词结果将显示在这里</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

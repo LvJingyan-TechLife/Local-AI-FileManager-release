@@ -1,0 +1,130 @@
+<!-- 文档生成面板内容 -->
+<div class="panel-container">
+    <div class="doc-generation-layout">
+        <div class="generation-sidebar-left">
+            <h4>🔍 文件搜索</h4>
+            <div class="form-group search-inline">
+                <input type="text" id="component-genSearchQuery" class="form-control" placeholder="搜索参考内容">
+                <button class="btn btn-secondary search-btn-icon" id="component-genSearchBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="M21 21l-4.35-4.35"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="gen-search-results" id="component-genSearchResults">
+                <p class="result-placeholder">搜索结果将显示在这里</p>
+            </div>
+            <div class="detail-panel" id="component-genResultDetail" style="display: none;">
+                <div class="detail-header">
+                    <h3>结果详情</h3>
+                    <button class="btn-close" id="component-closeGenDetail">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="detail-content" id="component-genDetailContent"></div>
+            </div>
+        </div>
+        <div class="generation-main">
+            <div class="generation-controls-row">
+                <div class="form-group control-item">
+                    <label>文档类型</label>
+                    <select id="component-genDocType" class="form-control">
+                        <option value="word">Word</option>
+                        <option value="ppt">PPT</option>
+                    </select>
+                </div>
+                <div class="form-group control-item length-control">
+                    <label>生成长度</label>
+                    <select id="component-genLength" class="form-control">
+                        <option value="short">简短 (~500字)</option>
+                        <option value="medium" selected>中等 (~2000字)</option>
+                        <option value="long">详细 (~5000字)</option>
+                    </select>
+                </div>
+                <div class="form-group control-item numbering-control">
+                    <label>编号格式</label>
+                    <select id="component-genNumberingFormat" class="form-control">
+                        <option value="arabic">阿拉伯数字 (1, 2, 3, ...)</option>
+                    </select>
+                </div>
+                <div class="form-group control-item">
+                    <label>章节数量</label>
+                    <select id="component-genChapterCount" class="form-control">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10" selected>10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                        <option value="16">16</option>
+                        <option value="17">17</option>
+                        <option value="18">18</option>
+                        <option value="19">19</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="component-generateOutlineBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    生成大纲
+                </button>
+                <button class="btn btn-primary" id="component-generateDocBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                    生成内容
+                </button>
+                <button class="btn btn-primary" id="component-exportDocBtn" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    导出文档
+                </button>
+            </div>
+            <div class="generation-input-row">
+                <div class="form-group topic-input">
+                    <label>生成主题</label>
+                    <input type="text" id="component-genTopic" class="form-control" placeholder="输入要生成文档的主题">
+                </div>
+                <div class="form-group requirements-input">
+                    <label>生成要求</label>
+                    <input type="text" id="component-genRequirements" class="form-control" placeholder="描述具体要求和内容要点">
+                </div>
+            </div>
+            <div class="generation-content-wrapper">
+                <div class="generation-outline-row">
+                    <div class="generation-outline" id="component-outlineTree">
+                        <p class="result-placeholder">生成的大纲将显示在这里</p>
+                    </div>
+                </div>
+                <div class="generation-result" id="component-genResult">
+                    <p class="result-placeholder">生成的内容将显示在这里</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

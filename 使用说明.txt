@@ -1,0 +1,32 @@
+本地文件AI管理系统 - 使用说明
+========================================
+
+【系统信息】
+- 版本: 1.0.0
+- 打包日期: 2026-01-22
+- 运行环境: Windows 10/11
+
+【快速启动】
+1. 双击 "启动系统.bat" 启动系统
+2. 或直接运行 "LocalAIFileManager.exe"
+
+【访问地址】
+- BS前端界面: http://localhost:9989
+- File Management API: http://localhost:9988
+- API文档: http://localhost:9988/docs
+
+【服务端口】
+- API Service: 9988
+- BS Server: 9989
+
+【注意事项】
+1. 首次启动可能需要较长时间加载模型
+2. 请确保端口 9988 和 9989 未被占用
+3. 建议在稳定的网络环境下使用
+4. 如需停止服务，请按 Ctrl+C 或关闭窗口
+
+【技术支持】
+- 项目地址: https://github.com/LvJingyan-TechLife/Local-AI-FileManager-debug.git
+- 问题反馈: issues
+
+========================================
