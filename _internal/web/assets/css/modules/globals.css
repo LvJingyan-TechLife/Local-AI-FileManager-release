@@ -66,6 +66,8 @@ html {
 .btn-primary {
     background: var(--primary-color);
     color: white;
+    min-width: 120px;
+    padding: 8px 24px;
 }
 
 .btn-primary:hover {

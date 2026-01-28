@@ -13,6 +13,12 @@
             this.generateCount = 0; // 用于计数generateOutline方法的调用次数
             this.isGenerating = false; // 用于防止并发调用
             this.lastGenerateTime = null; // 用于防止快速连续调用
+            
+            // 分页相关属性
+            this.searchPageSize = 5; // 每页显示5条结果（紧凑模式）
+            this.searchCurrentPage = 1; // 当前页码
+            this.toggleEventsBound = false; // 展开折叠事件绑定标志
+            this.paginationEventsBound = false; // 分页事件绑定标志
         }
 
         // 初始化文档生成功能
@@ -208,6 +214,9 @@
             
             this.eventsBound = true;
             console.log('[DOCGEN] 事件绑定完成');
+            
+            // 绑定分页事件
+            this.bindPaginationEvents();
         }
 
         // 初始化搜索结果列表
@@ -217,6 +226,9 @@
 
         // 执行文档生成搜索
         async performSearch() {
+            // 重置到第一页
+            this.searchCurrentPage = 1;
+            
             // 只从主文档面板中获取搜索输入框和结果容器
             const query = document.querySelector('#docgen-panel > .panel-container #component-genSearchQuery').value;
             const resultsContainer = document.querySelector('#docgen-panel > .panel-container #component-genSearchResults');
@@ -267,36 +279,193 @@
             console.log('[DEBUG] 搜索结果数据:', results);
             if (!results || results.length === 0) {
                 container.innerHTML = '<div class="alert alert-info">未找到相关内容</div>';
+                document.getElementById('component-genSearchPagination').innerHTML = '';
+                // 重置标题
+                const titleElement = document.getElementById('genSearchTitle');
+                if (titleElement) {
+                    titleElement.textContent = '🔍 文件搜索';
+                }
                 return;
             }
             
+            // 计算分页
+            this.searchResults = results;
+            const totalPages = Math.ceil(results.length / this.searchPageSize);
+            const startIndex = (this.searchCurrentPage - 1) * this.searchPageSize;
+            const endIndex = startIndex + this.searchPageSize;
+            const pageResults = results.slice(startIndex, endIndex);
+            
+            // 更新标题显示结果数量
+            const titleElement = document.getElementById('genSearchTitle');
+            if (titleElement) {
+                titleElement.textContent = `🔍 文件搜索 (${results.length})`;
+            }
+            
             const html = `
-                <h4 class="search-results-title">搜索结果 (${results.length})</h4>
-                <div class="gen-search-results-list" style="overflow-y: auto; max-height: calc(100% - 40px);">
-                    ${results.map((result, index) => {
-                        console.log(`[DEBUG] 结果${index}完整数据:`, result);
-                        console.log(`[DEBUG] 结果${index}的metadata:`, result.metadata);
-                        console.log(`[DEBUG] 结果${index}的filename:`, result.metadata?.filename);
-                        const filename = result.metadata?.filename || result.filename || '未命名文档';
-                        console.log(`[DEBUG] 最终使用的filename:`, filename);
-                        return `
-                        <div class="gen-search-result-item" data-index="${index}">
-                            <div class="gen-result-title">
-                                <strong>${filename}</strong>
-                            </div>
-                            <div class="gen-result-content">
-                                ${result.content || ''}
-                            </div>
-                            <div class="gen-result-meta">
-                                <span class="score">相关度: ${(result.score * 100).toFixed(2)}%</span>
-                                <span class="page">块索引: ${result.metadata?.chunk_index || 'N/A'}</span>
-                            </div>
+                ${pageResults.map((result, index) => {
+                    const globalIndex = startIndex + index;
+                    console.log(`[DEBUG] 结果${globalIndex}完整数据:`, result);
+                    console.log(`[DEBUG] 结果${globalIndex}的metadata:`, result.metadata);
+                    console.log(`[DEBUG] 结果${globalIndex}的filename:`, result.metadata?.filename);
+                    const filename = result.metadata?.filename || result.filename || '未命名文档';
+                    console.log(`[DEBUG] 最终使用的filename:`, filename);
+                    const score = result.score || 0;
+                    const scorePercent = (score * 100).toFixed(1);
+                    return `
+                    <div class="gen-search-result-item" data-index="${globalIndex}">
+                        <div class="gen-result-title">
+                            <strong>${filename}</strong>
+                            <button class="gen-toggle-btn" data-expanded="false" data-index="${globalIndex}">
+                                <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                                <span>展开</span>
+                            </button>
                         </div>
-                    `}).join('')}
-                </div>
+                        <div class="gen-result-content collapsed">
+                            ${result.content || ''}
+                        </div>
+                        <div class="gen-result-meta">
+                            <span class="score">相关度: ${scorePercent}%</span>
+                            <span class="page">块索引: ${result.metadata?.chunk_index || 'N/A'}</span>
+                        </div>
+                    </div>
+                `}).join('')}
             `;
             
             container.innerHTML = html;
+            
+            // 渲染分页到独立容器
+            const paginationContainer = document.getElementById('component-genSearchPagination');
+            if (paginationContainer) {
+                paginationContainer.innerHTML = this.renderPagination(results.length, totalPages);
+            }
+            
+            // 绑定展开折叠事件
+            this.bindToggleEvents();
+        }
+        
+        // 绑定展开折叠事件
+        bindToggleEvents() {
+            const container = document.getElementById('component-genSearchResults');
+            if (!container) return;
+            
+            // 确保只绑定一次
+            if (this.toggleEventsBound) {
+                return;
+            }
+            
+            // 使用事件委托，避免重复绑定
+            container.addEventListener('click', (e) => {
+                const toggleBtn = e.target.closest('.gen-toggle-btn');
+                if (!toggleBtn) return;
+                
+                const contentDiv = toggleBtn.closest('.gen-search-result-item')?.querySelector('.gen-result-content');
+                if (!contentDiv) return;
+                
+                e.stopPropagation();
+                const isExpanded = toggleBtn.dataset.expanded === 'true';
+                
+                if (isExpanded) {
+                    contentDiv.classList.add('collapsed');
+                    toggleBtn.dataset.expanded = 'false';
+                    toggleBtn.querySelector('span').textContent = '展开';
+                    toggleBtn.querySelector('.toggle-icon').innerHTML = '<polyline points="6 9 12 15 18 9"></polyline>';
+                } else {
+                    contentDiv.classList.remove('collapsed');
+                    toggleBtn.dataset.expanded = 'true';
+                    toggleBtn.querySelector('span').textContent = '折叠';
+                    toggleBtn.querySelector('.toggle-icon').innerHTML = '<polyline points="18 15 12 9 6 15"></polyline>';
+                }
+            });
+            
+            this.toggleEventsBound = true;
+        }
+        
+        // 渲染分页控件
+        renderPagination(totalResults, totalPages) {
+            if (totalPages <= 1) return '';
+            
+            return `
+                <div class="pagination-container">
+                    <div class="pagination-controls">
+                        <button class="pagination-btn" data-action="prev" ${this.searchCurrentPage === 1 ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <div class="pagination-pages">
+                            <input type="number" class="pagination-input" value="${this.searchCurrentPage}" min="1" max="${totalPages}">
+                            <span class="pagination-total">/ ${totalPages}</span>
+                        </div>
+                        <button class="pagination-btn" data-action="next" ${this.searchCurrentPage === totalPages ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="pagination-size">
+                        <select class="pagination-select" id="genPageSizeSelect">
+                            <option value="5" ${this.searchPageSize === 5 ? 'selected' : ''}>5条/页</option>
+                            <option value="10" ${this.searchPageSize === 10 ? 'selected' : ''}>10条/页</option>
+                            <option value="20" ${this.searchPageSize === 20 ? 'selected' : ''}>20条/页</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 绑定分页事件
+        bindPaginationEvents() {
+            const container = document.getElementById('component-genSearchPagination');
+            if (!container) return;
+            
+            // 确保只绑定一次
+            if (this.paginationEventsBound) {
+                return;
+            }
+            
+            // 使用事件委托
+            container.addEventListener('click', (e) => {
+                const btn = e.target.closest('.pagination-btn');
+                if (!btn) return;
+                
+                const action = btn.dataset.action;
+                const totalPages = Math.ceil(this.searchResults.length / this.searchPageSize);
+                
+                if (action === 'prev' && this.searchCurrentPage > 1) {
+                    this.searchCurrentPage--;
+                } else if (action === 'next' && this.searchCurrentPage < totalPages) {
+                    this.searchCurrentPage++;
+                }
+                
+                // 重新渲染搜索结果
+                this.renderSearchResults(this.searchResults, document.getElementById('component-genSearchResults'));
+            });
+            
+            // 绑定页码输入框事件
+            container.addEventListener('change', (e) => {
+                if (e.target.classList.contains('pagination-input')) {
+                    const page = parseInt(e.target.value);
+                    const totalPages = Math.ceil(this.searchResults.length / this.searchPageSize);
+                    
+                    if (page >= 1 && page <= totalPages) {
+                        this.searchCurrentPage = page;
+                        this.renderSearchResults(this.searchResults, document.getElementById('component-genSearchResults'));
+                    }
+                }
+            });
+            
+            // 绑定每页条数选择事件
+            container.addEventListener('change', (e) => {
+                if (e.target.id === 'genPageSizeSelect') {
+                    this.searchPageSize = parseInt(e.target.value);
+                    this.searchCurrentPage = 1; // 重置到第一页
+                    this.renderSearchResults(this.searchResults, document.getElementById('component-genSearchResults'));
+                }
+            });
+            
+            this.paginationEventsBound = true;
         }
 
         // 生成大纲

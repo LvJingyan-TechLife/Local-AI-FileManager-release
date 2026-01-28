@@ -378,7 +378,8 @@
                 
                 const retrievalResults = await this.api.ragRetrieve(message, {
                     k: k,
-                    content_type: 'all'
+                    content_type: 'all',
+                    search_mode: 'intelligent'
                 });
                 
                 this.log('DEBUG', 'ragRetrieve调用完成', {
@@ -437,12 +438,20 @@
                 
                 this.log('DEBUG', 'chatWithContext调用完成', {
                     hasAnswer: !!response?.answer,
-                    hasSources: !!response?.sources
+                    hasSources: !!response?.sources,
+                    answerLength: response?.answer?.length || 0,
+                    sourcesCount: response?.sources?.length || 0
                 });
+                
+                console.log('[CHAT-DEBUG] 完整响应数据:', response);
+                console.log('[CHAT-DEBUG] sources数据:', response?.sources);
                 
                 // 更新右侧片段显示
                 if (response.sources) {
+                    this.log('INFO', `开始更新右侧片段显示，sources数量: ${response.sources.length}`);
                     this.updateRetrievalSidebar(response.sources);
+                } else {
+                    this.log('WARNING', '响应中没有sources数据');
                 }
                 
                 // 移除加载消息
@@ -516,13 +525,30 @@
                 
                 const retrievalResults = await this.api.ragRetrieve(message, {
                     k: k,
-                    content_type: 'all'
+                    content_type: 'all',
+                    search_mode: 'intelligent'
                 });
                 
                 this.log('DEBUG', 'ragRetrieve调用完成', {
                     hasResults: !!retrievalResults?.results,
                     resultsCount: retrievalResults?.results?.length || 0
                 });
+                
+                // 立即显示检索结果到侧边栏
+                if (retrievalResults && retrievalResults.results && retrievalResults.results.length > 0) {
+                    this.log('INFO', `立即显示检索结果，数量: ${retrievalResults.results.length}`);
+                    const sourcesForDisplay = retrievalResults.results.map(result => ({
+                        content: result.content,
+                        source: result.source || result.metadata?.filename || result.filename || '未知来源',
+                        score: result.score,
+                        filename: result.filename || result.metadata?.filename || result.file_name || '',
+                        chunk_id: result.chunk_index || 0,
+                        document_id: result.document_id || '',
+                        title: result.metadata?.title || result.filename || '未知标题',
+                        metadata: result.metadata || {}
+                    }));
+                    this.updateRetrievalSidebar(sourcesForDisplay);
+                }
                 
                 let combinedContext = [];
                 
@@ -561,9 +587,6 @@
                         newContextCount: newContext.length,
                         combinedContextCount: combinedContext.length
                     });
-                    
-                    // 注意：不在这里更新侧边栏，避免与streaming响应中的sources事件重复
-                    // 侧边栏将在processStreamResponse方法中处理sources事件时更新
                     
                     // 使用chat_with_context端点
                     responseStream = await this.api.chatWithContextStream(message, combinedContext, {
@@ -627,6 +650,9 @@
             let isComplete = false;
             let chunkCount = 0;
             
+            let currentEvent = '';
+            let currentData = '';
+            
             try {
                 while (!isComplete) {
                     const { done, value } = await reader.read();
@@ -639,31 +665,51 @@
                     const lines = chunk.split('\n');
                     
                     for (const line of lines) {
-                        if (line.trim() === '') continue;
-                        
-                        if (line.startsWith('data: ')) {
-                            try {
-                                chunkCount++;
-                                const data = JSON.parse(line.slice(6));
-                                
-
-                                
-                                await this.handleStreamChunk(data, container);
-                                
-                                if (data.type === 'complete') {
-                                    isComplete = true;
+                        const trimmedLine = line.trim();
+                        if (trimmedLine === '') {
+                            if (currentEvent && currentData) {
+                                console.log('[STREAM] 准备解析事件:', currentEvent);
+                                console.log('[STREAM] 数据长度:', currentData.length);
+                                console.log('[STREAM] 数据开头:', currentData.substring(0, 100));
+                                console.log('[STREAM] 数据结尾:', currentData.substring(currentData.length - 100));
+                                try {
+                                    chunkCount++;
+                                    const data = JSON.parse(currentData);
+                                    console.log('[STREAM] 收到数据块:', currentEvent, 'chunkCount:', chunkCount);
+                                    
+                                    await this.handleStreamChunk(data, container);
+                                    
+                                    if (data.type === 'complete') {
+                                        isComplete = true;
+                                    }
+                                    
+                                    if (data.type === 'token' && data.content) {
+                                        fullResponse += data.content;
+                                    }
+                                    
+                                    if (data.type === 'token' && data.thinking) {
+                                        fullThinking += data.thinking;
+                                    }
+                                } catch (parseError) {
+                                    console.error('[STREAM] 解析数据失败:', parseError);
+                                    console.error('[STREAM] 原始data长度:', currentData.length);
+                                    console.error('[STREAM] 原始data开头:', currentData.substring(0, 500));
+                                    console.error('[STREAM] 原始data结尾:', currentData.substring(currentData.length - 500));
                                 }
-                                
-                                if (data.type === 'token' && data.content) {
-                                    fullResponse += data.content;
-                                }
-                                
-                                if (data.type === 'token' && data.thinking) {
-                                    fullThinking += data.thinking;
-                                }
-                            } catch (parseError) {
-                                console.error('[STREAM] 解析数据失败:', parseError, '原始行:', line);
+                                currentEvent = '';
+                                currentData = '';
                             }
+                            continue;
+                        }
+                        
+                        if (trimmedLine.startsWith('event: ')) {
+                            currentEvent = trimmedLine.slice(7);
+                        } else if (trimmedLine.startsWith('data: ')) {
+                            currentData = trimmedLine.slice(6);
+                        } else if (trimmedLine.startsWith('data:')) {
+                            currentData += trimmedLine.slice(5);
+                        } else if (line.startsWith(' ')) {
+                            currentData += line;
                         }
                     }
                 }
@@ -690,6 +736,8 @@
         }
 
         async handleStreamChunk(data, container) {
+            console.log('[STREAM-CHUNK] handleStreamChunk被调用，data.type:', data.type);
+            
             const thinkingContent = container.querySelector('.thinking-content');
             const responseContent = container.querySelector('.response-content');
             
@@ -721,11 +769,6 @@
                         thinkingSection.style.fontStyle = 'italic';
                     }
                 }
-            }
-            
-            // 处理sources数据，更新右侧片段显示
-            if (data.type === 'sources' && data.sources) {
-                this.updateRetrievalSidebar(data.sources);
             }
             
             // 滚动到最新消息
@@ -998,79 +1041,82 @@
 
         updateRetrievalSidebar(sources) {
             console.log('[RETRIEVAL] 开始更新右侧片段显示，来源数量:', sources.length);
-            console.log('[RETRIEVAL] 来源数据详情:', JSON.stringify(sources, null, 2));
             
-            const retrievalContent = document.getElementById('retrievalContent');
-            if (!retrievalContent) {
-                console.error('[RETRIEVAL] 找不到retrievalContent元素');
-                return;
-            }
+            try {
+                const retrievalContent = document.getElementById('retrievalContent');
+                if (!retrievalContent) {
+                    console.error('[RETRIEVAL] 找不到retrievalContent元素');
+                    return;
+                }
 
-            if (!sources || sources.length === 0) {
-                retrievalContent.innerHTML = '<div class="empty-hint">暂无相关内容</div>';
-                return;
-            }
+                if (!sources || sources.length === 0) {
+                    console.log('[RETRIEVAL] sources为空，显示暂无相关内容');
+                    retrievalContent.innerHTML = '<div class="empty-hint">暂无相关内容</div>';
+                    return;
+                }
+                
+                console.log('[RETRIEVAL] 开始生成片段HTML，片段数量:', sources.length);
 
-            // 生成片段HTML
-            const fragmentsHtml = sources.map((source, index) => {
-                const content = source.content || source.text || '';
-                
-                // 添加详细的文件名获取日志
-                console.log(`[RETRIEVAL] 来源${index}文件名获取详情:`, {
-                    'source.metadata?.title': source.metadata?.title,
-                    'source.title': source.title,
-                    'source.filename': source.filename,
-                    'source.metadata?.filename': source.metadata?.filename,
-                    'source.metadata?.file_name': source.metadata?.file_name
-                });
-                
-                const title = source.metadata?.title || source.title || source.filename || source.metadata?.filename || source.metadata?.file_name || '未知文档';
-                const filename = source.metadata?.filename || source.filename || source.metadata?.file_name || '';
-                const score = source.score || source.similarity || 0;
-                const chunkId = source.chunk_id || source.chunkIndex || '';
-                const documentId = source.document_id || source.documentId || '';
-                
-                // 显示完整内容
-                const displayContent = content;
+                // 生成片段HTML
+                const fragmentsHtml = sources.map((source, index) => {
+                    try {
+                        const content = source.content || source.text || '';
+                        
+                        const title = source.metadata?.title || source.title || source.filename || source.metadata?.filename || source.metadata?.file_name || '未知文档';
+                        const filename = source.metadata?.filename || source.filename || source.metadata?.file_name || '';
+                        const score = source.score || source.similarity || 0;
+                        const chunkId = source.chunk_id || source.chunkIndex || '';
+                        const documentId = source.document_id || source.documentId || '';
+                        
+                        // 显示完整内容
+                        const displayContent = content;
 
-                return `
-                    <div class="retrieval-fragment" data-index="${index}">
-                        <div class="fragment-header">
-                            <div class="fragment-title">
-                                <svg class="fragment-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                </svg>
-                                <span class="title-text">${this.escapeHtml(title)}</span>
+                        return `
+                            <div class="retrieval-fragment" data-index="${index}">
+                                <div class="fragment-header">
+                                    <div class="fragment-title">
+                                        <svg class="fragment-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                        </svg>
+                                        <span class="title-text">${this.escapeHtml(title)}</span>
+                                    </div>
+                                    <div class="fragment-meta">
+                                        <span class="similarity-score">${(score * 100).toFixed(1)}%</span>
+                                    </div>
+                                </div>
+                                <div class="fragment-content">
+                                    <p>${this.escapeHtml(displayContent)}</p>
+                                </div>
+                                <div class="fragment-footer">
+                                    ${filename ? `<span class="filename">📄 ${this.escapeHtml(filename)}</span>` : ''}
+                                    ${chunkId ? `<span class="chunk-id">片段: ${chunkId}</span>` : ''}
+                                </div>
                             </div>
-                            <div class="fragment-meta">
-                                <span class="similarity-score">${(score * 100).toFixed(1)}%</span>
-                            </div>
-                        </div>
-                        <div class="fragment-content">
-                            <p>${this.escapeHtml(displayContent)}</p>
-                        </div>
-                        <div class="fragment-footer">
-                            ${filename ? `<span class="filename">📄 ${this.escapeHtml(filename)}</span>` : ''}
-                            ${chunkId ? `<span class="chunk-id">片段: ${chunkId}</span>` : ''}
-                        </div>
+                        `;
+                    } catch (error) {
+                        console.error(`[RETRIEVAL] 处理片段${index}时出错:`, error);
+                        return '';
+                    }
+                }).join('');
+
+                // 更新侧边栏标题
+                const retrievalTitle = document.getElementById('retrievalTitle');
+                if (retrievalTitle) {
+                    retrievalTitle.textContent = `📚 相关片段：${sources.length}`;
+                }
+                
+                retrievalContent.innerHTML = `
+                    <div class="retrieval-fragments">
+                        ${fragmentsHtml}
                     </div>
                 `;
-            }).join('');
 
-            // 更新侧边栏标题
-            const retrievalTitle = document.getElementById('retrievalTitle');
-            if (retrievalTitle) {
-                retrievalTitle.textContent = `📚 相关片段：${sources.length}`;
+                console.log('[RETRIEVAL] 右侧片段显示已更新');
+            } catch (error) {
+                console.error('[RETRIEVAL] 更新右侧片段显示时出错:', error);
+                console.error('[RETRIEVAL] 错误堆栈:', error.stack);
             }
-            
-            retrievalContent.innerHTML = `
-                <div class="retrieval-fragments">
-                    ${fragmentsHtml}
-                </div>
-            `;
-
-            console.log('[RETRIEVAL] 右侧片段显示已更新');
         }
 
         hideWelcomeScreen() {

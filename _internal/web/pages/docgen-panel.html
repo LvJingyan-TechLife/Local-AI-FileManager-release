@@ -2,7 +2,7 @@
 <div class="panel-container">
     <div class="doc-generation-layout">
         <div class="generation-sidebar-left">
-            <h4>🔍 文件搜索</h4>
+            <h4 id="genSearchTitle">🔍 文件搜索</h4>
             <div class="form-group search-inline">
                 <input type="text" id="component-genSearchQuery" class="form-control" placeholder="搜索参考内容">
                 <button class="btn btn-secondary search-btn-icon" id="component-genSearchBtn">
@@ -15,6 +15,7 @@
             <div class="gen-search-results" id="component-genSearchResults">
                 <p class="result-placeholder">搜索结果将显示在这里</p>
             </div>
+            <div class="gen-search-pagination" id="component-genSearchPagination"></div>
             <div class="detail-panel" id="component-genResultDetail" style="display: none;">
                 <div class="detail-header">
                     <h3>结果详情</h3>

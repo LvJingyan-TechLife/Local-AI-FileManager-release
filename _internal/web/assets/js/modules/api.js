@@ -428,6 +428,9 @@
                 const response = await this.request('POST', '/api/v1/rag/chat_with_context', { body: params });
                 console.log('[API-DEBUG] chatWithContext调用成功');
                 console.log('[API-DEBUG] chatWithContext响应:', response);
+                console.log('[API-DEBUG] 响应中是否有answer:', !!response?.answer);
+                console.log('[API-DEBUG] 响应中是否有sources:', !!response?.sources);
+                console.log('[API-DEBUG] sources数量:', response?.sources?.length || 0);
                 return response;
             } catch (error) {
                 console.error('[API-DEBUG] chatWithContext调用失败:', error);
