@@ -390,6 +390,7 @@
             
             const docTable = document.getElementById('docTable');
             const docListContainer = document.querySelector('.doc-list-section-enhanced');
+            const tableWrapper = document.querySelector('.table-wrapper-enhanced');
             
             if (!docTable || !docListContainer) {
                 console.error('[FILE-MANAGER] 视图切换失败：未找到必要的DOM元素');
@@ -400,6 +401,11 @@
             if (view === 'list') {
                 console.log('[FILE-MANAGER] 切换到列表视图');
                 this.currentView = 'list';
+                
+                // 显示表格容器
+                if (tableWrapper) {
+                    tableWrapper.style.display = 'block';
+                }
                 
                 // 显示列表视图
                 docTable.style.display = 'table';
@@ -419,6 +425,11 @@
                 this.toast.info('已切换到列表视图');
             } else if (view === 'tree') {
                 console.log('[FILE-MANAGER] 切换到树形视图');
+                
+                // 隐藏表格容器
+                if (tableWrapper) {
+                    tableWrapper.style.display = 'none';
+                }
                 
                 // 隐藏列表视图
                 docTable.style.display = 'none';
@@ -450,6 +461,9 @@
                     treeView = document.createElement('div');
                     treeView.className = 'tree-view';
                     docListContainer.appendChild(treeView);
+                } else {
+                    // 确保树形视图可见
+                    treeView.style.display = 'block';
                 }
                 
                 // 生成树形视图内容

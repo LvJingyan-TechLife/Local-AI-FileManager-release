@@ -30,7 +30,7 @@
     --radius-lg: 12px;
     --transition-fast: 0.15s ease;
     --transition-normal: 0.25s ease;
-    --sidebar-width: 260px;
+    --sidebar-width: 200px;
     --sidebar-collapsed-width: 64px;
     --topbar-height: 56px;
 }
@@ -66,6 +66,8 @@ html {
 .btn-primary {
     background: var(--primary-color);
     color: white;
+    min-width: 120px;
+    padding: 8px 24px;
 }
 
 .btn-primary:hover {

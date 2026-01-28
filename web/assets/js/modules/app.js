@@ -12,6 +12,7 @@
             this.categoryManager = new window.CategoryManager();
             this.fileManager = new window.FileManager(this.api, this.toast, this.categoryManager);
             this.chatManager = new window.ChatManager(this.api, this.toast);
+            this.searchManager = new window.SearchManager(this.api, this.toast, this.categoryManager);
             this.docGenManager = new window.DocGenManager(this.api, this.toast);
             
             this.currentFiles = [];
@@ -56,9 +57,12 @@
                     
                     // 调用RAG事件初始化
                     this.chatManager.initRagEvents();
-                    
+
                     // 初始化文档生成功能
                     this.docGenManager.init();
+
+                    // 初始化语义搜索功能
+                    this.searchManager.init();
                     
                     // 连接检查
                     await this.checkConnection();
@@ -97,9 +101,12 @@
                 
                 // 调用RAG事件初始化
                 this.chatManager.initRagEvents();
-                
+
                 // 初始化文档生成功能
                 this.docGenManager.init();
+
+                // 初始化语义搜索功能
+                this.searchManager.init();
                 
                 // 连接检查
                 await this.checkConnection();
@@ -271,7 +278,7 @@
                 searchBtn.addEventListener('click', () => {
                     const query = document.getElementById('searchInput').value.trim();
                     console.log('[APP] 搜索按钮点击，开始搜索:', query);
-                    this.chatManager.performSearch();
+                    this.searchManager.handleSearch();
                 });
             }
             
@@ -281,7 +288,7 @@
                     if (e.key === 'Enter') {
                         const query = e.target.value.trim();
                         console.log('[APP] Enter键按下，开始搜索:', query);
-                        this.chatManager.performSearch();
+                        this.searchManager.handleSearch();
                     }
                 });
             }

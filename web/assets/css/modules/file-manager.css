@@ -34,6 +34,15 @@
     padding-bottom: 0;
 }
 
+.doc-list-section-enhanced {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
 /* Enhanced Document Upload Section */
 .doc-upload-section-enhanced {
     background: var(--bg-secondary);
@@ -161,7 +170,6 @@
     flex: 1;
     overflow-x: auto;
     overflow-y: auto;
-    max-height: calc(100vh - 300px);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     background: var(--bg-secondary);
@@ -340,9 +348,10 @@
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    padding: 12px 0;
+    padding: 4px 0;
     font-size: 13px;
     color: var(--text-muted);
+    flex-shrink: 0;
 }
 
 .doc-stats {
@@ -578,10 +587,9 @@
 /* Tree View Styles */
 .tree-view {
     width: 100%;
-    height: 100%;
-    max-height: calc(100vh - 300px);
-    padding: 16px;
+    flex: 1;
     overflow-y: auto;
+    padding: 16px;
     background: var(--bg-secondary);
     border-radius: var(--radius-lg);
     position: relative;

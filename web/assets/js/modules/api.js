@@ -343,6 +343,56 @@
             return this.request('GET', '/api/v1/rag/config');
         }
 
+        /**
+         * ⚠️ 已废弃 - 请使用 ragRetrieve() 方法代替
+         * 
+         * 语义搜索接口 - 已被 ragRetrieve 替代
+         * 
+         * 原因说明：
+         * 1. 该接口返回结果数量有限（默认10条，最大50条）
+         * 2. 不支持精确搜索模式，只能进行语义搜索
+         * 3. 不支持跨库搜索（content_type参数）
+         * 4. 返回的数据格式与 ragRetrieve 不一致
+         * 
+         * 推荐替代方案：
+         * - 使用 ragRetrieve(query, { k: 10000, content_type: 'all', search_mode: 'exact' })
+         * - 支持精确搜索和语义搜索切换
+         * - 支持返回更多结果（最多10000条）
+         * - 支持跨库搜索（中文库+英文库）
+         * 
+         * 接口信息：
+         * - 路径: POST /api/v1/search
+         * - 后端处理器: api/handlers/search_handler.py
+         * - 路由: @router.post("/", response_model=FileSearchResponse)
+         * 
+         * 参数说明：
+         * @param {string} query - 搜索查询文本
+         * @param {object} options - 可选参数
+         * @param {number} options.k - 返回结果数量（默认10，最大50）
+         * @param {string} options.category - 分类过滤（可选）
+         * 
+         * 返回格式：
+         * {
+         *   status: "success",
+         *   message: "Search completed successfully",
+         *   query: "搜索查询",
+         *   results: [...],
+         *   total_results: 结果数量,
+         *   knowledge_graph_expansion: {...},
+         *   suggestions: {...},
+         *   fuzzy_detection: {...}
+         * }
+         * 
+         * 使用示例（已废弃）：
+         * const results = await api.semanticSearch("中科亿海微", { k: 10 });
+         * 
+         * 推荐使用（新方法）：
+         * const results = await api.ragRetrieve("中科亿海微", {
+         *     k: 10000,
+         *     content_type: 'all',
+         *     search_mode: 'exact'
+         * });
+         */
         async semanticSearch(query, options = {}) {
             const params = {
                 query,
@@ -378,6 +428,9 @@
                 const response = await this.request('POST', '/api/v1/rag/chat_with_context', { body: params });
                 console.log('[API-DEBUG] chatWithContext调用成功');
                 console.log('[API-DEBUG] chatWithContext响应:', response);
+                console.log('[API-DEBUG] 响应中是否有answer:', !!response?.answer);
+                console.log('[API-DEBUG] 响应中是否有sources:', !!response?.sources);
+                console.log('[API-DEBUG] sources数量:', response?.sources?.length || 0);
                 return response;
             } catch (error) {
                 console.error('[API-DEBUG] chatWithContext调用失败:', error);
